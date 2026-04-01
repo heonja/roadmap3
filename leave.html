@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>휴가 계획표</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #ddd6f7;
+    --surface: #ebe6ff;
+    --surface2: #d4ccf0;
+    --border: #beb4e8;
+    --accent: #6b4edb;
+    --accent2: #d04878;
+    --accent3: #1aaf8a;
+    --text: #2a2050;
+    --text-dim: #7a6eaa;
+    --text-bright: #150f40;
+    --outing: #d97a2a;
+    --overnight: #3a8ee0;
+    --vacation: #6b4edb;
+    --discharge: #d04878;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans KR', sans-serif;
+    min-height: 100vh;
+    padding: 24px;
+    line-height: 1.6;
+  }
+
+  /* HEADER */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .header-left h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-bright);
+    letter-spacing: -0.5px;
+  }
+  .header-left p {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 2px;
+    font-family: 'Space Mono', monospace;
+  }
+  .discharge-badge {
+    background: linear-gradient(135deg, var(--accent2), #c84060);
+    border-radius: 12px;
+    padding: 10px 18px;
+    text-align: center;
+  }
+  .discharge-badge .d-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 28px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1;
+  }
+  .discharge-badge .d-label {
+    font-size: 10px;
+    color: rgba(255,255,255,0.7);
+    margin-top: 2px;
+  }
+
+  /* TOP STATS */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+  }
+  .stat-card .stat-label {
+    font-size: 10px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+  .stat-card .stat-value {
+    font-family: 'Space Mono', monospace;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-bright);
+  }
+  .stat-card .stat-sub {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+  .stat-card.accent-vacation .stat-value { color: var(--vacation); }
+  .stat-card.accent-overnight .stat-value { color: var(--overnight); }
+  .stat-card.accent-outing .stat-value { color: var(--outing); }
+
+  /* MAIN GRID */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  /* TIMELINE */
+  .timeline-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .panel-header {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .panel-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-bright);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .panel-title::before {
+    content: '';
+    display: block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  .timeline {
+    padding: 10px 0;
+    max-height: 580px;
+    overflow-y: auto;
+  }
+  .timeline::-webkit-scrollbar { width: 4px; }
+  .timeline::-webkit-scrollbar-track { background: transparent; }
+  .timeline::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .tl-item {
+    display: grid;
+    grid-template-columns: 100px 1fr;
+    gap: 0;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .tl-item:hover { background: rgba(124,92,252,0.05); }
+  .tl-item.active { background: rgba(124,92,252,0.08); }
+
+  .tl-date {
+    padding: 12px 14px 12px 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    position: relative;
+  }
+  .tl-date::after {
+    content: '';
+    position: absolute;
+    right: -1px;
+    top: 0; bottom: 0;
+    width: 1px;
+    background: var(--border);
+  }
+  .tl-month {
+    font-size: 10px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-family: 'Space Mono', monospace;
+  }
+  .tl-day {
+    font-family: 'Space Mono', monospace;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-bright);
+  }
+
+  .tl-content {
+    padding: 12px 14px 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    border-bottom: 1px solid rgba(42,42,58,0.5);
+  }
+  .tl-item:last-child .tl-content { border-bottom: none; }
+
+  .tl-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .type-badge {
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+  .badge-vacation { background: rgba(124,106,247,0.2); color: var(--vacation); }
+  .badge-overnight { background: rgba(106,175,247,0.2); color: var(--overnight); }
+  .badge-outing { background: rgba(247,162,106,0.2); color: var(--outing); }
+  .badge-discharge { background: rgba(247,106,138,0.2); color: var(--discharge); }
+
+  .tl-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-bright);
+  }
+
+  .tl-dday {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-left: auto;
+  }
+  .tl-dday.soon { color: var(--accent2); }
+  .tl-dday.today { color: var(--accent3); font-weight: 700; }
+
+  .tl-panel {
+    display: none;
+    margin-top: 10px;
+    animation: fadeIn 0.18s ease;
+  }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
+  .tl-item.active .tl-panel { display: block; }
+
+  /* Type selector */
+  .type-selector {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+  .type-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--text-dim);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'Noto Sans KR', sans-serif;
+  }
+  .type-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .type-btn.selected-travel { border-color: #4a9ef7; color: #4a9ef7; background: rgba(74,158,247,0.08); }
+  .type-btn.selected-rest { border-color: #22c9a0; color: #22c9a0; background: rgba(34,201,160,0.08); }
+  .type-btn.selected-todo { border-color: #7c5cfc; color: #7c5cfc; background: rgba(124,92,252,0.08); }
+
+  /* Template panels */
+  .tmpl { display: none; }
+  .tmpl.show { display: block; }
+
+  .tmpl-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+  .tmpl-field {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .tmpl-field label {
+    font-size: 10px;
+    color: var(--text-dim);
+    font-weight: 500;
+    letter-spacing: 0.3px;
+  }
+  .tmpl-input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 12px;
+    font-family: 'Noto Sans KR', sans-serif;
+    padding: 6px 9px;
+    outline: none;
+    transition: border-color 0.15s;
+    width: 100%;
+  }
+  .tmpl-input:focus { border-color: var(--accent); }
+  .tmpl-input::placeholder { color: var(--text-dim); }
+  textarea.tmpl-input { resize: none; min-height: 52px; }
+
+  /* Rest bucket list */
+  .bucket-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 6px; }
+  .bucket-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .bucket-item input[type="checkbox"] {
+    appearance: none;
+    width: 14px; height: 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 3px;
+    cursor: pointer;
+    flex-shrink: 0;
+    position: relative;
+    transition: all 0.15s;
+  }
+  .bucket-item input[type="checkbox"]:checked { background: #22c9a0; border-color: #22c9a0; }
+  .bucket-item input[type="checkbox"]:checked::after { content:'✓'; position:absolute; top:-1px; left:1px; font-size:10px; color:#fff; }
+  .bucket-item .bucket-text {
+    flex: 1;
+    background: none;
+    border: none;
+    outline: none;
+    font-size: 12px;
+    color: var(--text);
+    font-family: 'Noto Sans KR', sans-serif;
+  }
+  .bucket-item .bucket-del {
+    background: none; border: none; color: transparent; cursor: pointer; font-size: 13px; transition: color 0.15s;
+  }
+  .bucket-item:hover .bucket-del { color: var(--text-dim); }
+
+  .add-bucket-row { display: flex; gap: 5px; }
+  .add-bucket-input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 12px;
+    font-family: 'Noto Sans KR', sans-serif;
+    padding: 5px 9px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .add-bucket-input:focus { border-color: #22c9a0; }
+  .add-bucket-btn {
+    background: #22c9a0; border: none; border-radius: 6px; color: #fff;
+    font-size: 15px; width: 28px; cursor: pointer; opacity: 0.9;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* Todo template */
+  .todo-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 6px; }
+  .todo-item {
+    display: flex; align-items: center; gap: 7px;
+  }
+  .todo-item input[type="checkbox"] {
+    appearance: none; width: 14px; height: 14px;
+    border: 1.5px solid var(--border); border-radius: 3px; cursor: pointer;
+    flex-shrink: 0; position: relative; transition: all 0.15s;
+  }
+  .todo-item input[type="checkbox"]:checked { background: #7c5cfc; border-color: #7c5cfc; }
+  .todo-item input[type="checkbox"]:checked::after { content:'✓'; position:absolute; top:-1px; left:1px; font-size:10px; color:#fff; }
+  .todo-item .todo-text {
+    flex: 1; background: none; border: none; outline: none;
+    font-size: 12px; color: var(--text); font-family: 'Noto Sans KR', sans-serif;
+  }
+  .todo-item input[type="checkbox"]:checked ~ .todo-text { color: var(--text-dim); text-decoration: line-through; }
+  .todo-item .todo-del { background: none; border: none; color: transparent; cursor: pointer; font-size: 13px; transition: color 0.15s; }
+  .todo-item:hover .todo-del { color: var(--text-dim); }
+  .add-todo-row { display: flex; gap: 5px; }
+  .add-todo-input {
+    flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px;
+    color: var(--text); font-size: 12px; font-family: 'Noto Sans KR', sans-serif;
+    padding: 5px 9px; outline: none; transition: border-color 0.15s;
+  }
+  .add-todo-input:focus { border-color: #7c5cfc; }
+  .add-todo-btn {
+    background: #7c5cfc; border: none; border-radius: 6px; color: #fff;
+    font-size: 15px; width: 28px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .memo-input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 12px;
+    font-family: 'Noto Sans KR', sans-serif;
+    padding: 8px 10px;
+    width: 100%;
+    resize: none;
+    outline: none;
+    transition: border-color 0.15s;
+    min-height: 60px;
+  }
+  .memo-input:focus { border-color: var(--accent); }
+  .memo-input::placeholder { color: var(--text-dim); }
+
+  /* SIDE PANEL */
+  .side-col {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  /* NEXT EVENT */
+  .next-event-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .next-event-inner {
+    padding: 16px 18px;
+  }
+  .next-event-type {
+    font-size: 10px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+  .next-event-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-bright);
+    margin-bottom: 4px;
+  }
+  .next-event-date {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+  .next-event-progress {
+    padding: 12px 18px 16px;
+    background: var(--surface2);
+  }
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+    font-family: 'Space Mono', monospace;
+  }
+  .progress-bar {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 2px;
+    transition: width 0.5s ease;
+  }
+
+  /* BUDGET */
+  .budget-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    flex: 1;
+  }
+  .budget-body { padding: 14px 18px; }
+  .budget-total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 12px;
+  }
+  .budget-spent {
+    font-family: 'Space Mono', monospace;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-bright);
+  }
+  .budget-limit {
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+  .budget-bar {
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 14px;
+  }
+  .budget-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--accent3), var(--accent));
+    transition: width 0.4s;
+  }
+  .budget-items { display: flex; flex-direction: column; gap: 6px; }
+  .budget-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .budget-item-name {
+    flex: 1;
+    font-size: 12px;
+    color: var(--text);
+    background: none;
+    border: none;
+    outline: none;
+    font-family: 'Noto Sans KR', sans-serif;
+  }
+  .budget-item-name::placeholder { color: var(--text-dim); }
+  .budget-item-amount {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    background: none;
+    border: none;
+    outline: none;
+    text-align: right;
+    width: 80px;
+  }
+  .budget-item-amount::placeholder { color: var(--text-dim); }
+  .budget-item-delete {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 0 2px;
+    line-height: 1;
+    transition: color 0.15s;
+  }
+  .budget-item-delete:hover { color: var(--accent2); }
+  .add-budget-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    color: var(--text-dim);
+    font-size: 11px;
+    padding: 7px 12px;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 10px;
+    transition: all 0.15s;
+    font-family: 'Noto Sans KR', sans-serif;
+  }
+  .add-budget-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .budget-limit-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-top: 1px solid var(--border);
+    background: var(--surface2);
+  }
+  .budget-limit-label { font-size: 11px; color: var(--text-dim); }
+  .budget-limit-input {
+    background: none;
+    border: none;
+    outline: none;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--text);
+    flex: 1;
+    text-align: right;
+  }
+
+  /* CHECKLIST */
+  .checklist-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .checklist-body { padding: 14px 18px; }
+  .checklist-items { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+  .check-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 5px 0;
+  }
+  .check-item input[type="checkbox"] {
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border: 1.5px solid var(--border);
+    border-radius: 4px;
+    cursor: pointer;
+    flex-shrink: 0;
+    position: relative;
+    transition: all 0.15s;
+  }
+  .check-item input[type="checkbox"]:checked {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .check-item input[type="checkbox"]:checked::after {
+    content: '✓';
+    position: absolute;
+    top: -1px;
+    left: 2px;
+    font-size: 11px;
+    color: #fff;
+  }
+  .check-item label {
+    font-size: 12px;
+    color: var(--text);
+    cursor: pointer;
+    flex: 1;
+    transition: color 0.15s;
+  }
+  .check-item input[type="checkbox"]:checked + label {
+    color: var(--text-dim);
+    text-decoration: line-through;
+  }
+  .check-item .del-check {
+    background: none;
+    border: none;
+    color: transparent;
+    cursor: pointer;
+    font-size: 13px;
+    transition: color 0.15s;
+  }
+  .check-item:hover .del-check { color: var(--text-dim); }
+  .check-item .del-check:hover { color: var(--accent2); }
+  .add-check-row {
+    display: flex;
+    gap: 6px;
+  }
+  .add-check-input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 12px;
+    font-family: 'Noto Sans KR', sans-serif;
+    padding: 6px 10px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .add-check-input:focus { border-color: var(--accent); }
+  .add-check-input::placeholder { color: var(--text-dim); }
+  .add-check-btn {
+    background: var(--accent);
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 16px;
+    width: 30px;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .add-check-btn:hover { opacity: 0.8; }
+  .checklist-progress-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-top: 1px solid var(--border);
+    background: var(--surface2);
+  }
+  .checklist-bar {
+    flex: 1;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .checklist-fill {
+    height: 100%;
+    background: var(--accent3);
+    border-radius: 2px;
+    transition: width 0.3s;
+  }
+  .checklist-pct {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+  }
+
+  /* LEGEND */
+  .legend {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    margin-top: 8px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+  .legend-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <h1>🎖️ 휴가 계획표</h1>
+    <p id="today-str">Loading...</p>
+  </div>
+  <button onclick="saveDB()" style="background:linear-gradient(135deg,#7c5cfc,#a07cfc);border:none;border-radius:10px;color:#fff;font-size:12px;font-weight:700;padding:8px 16px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;" onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'">💾 저장</button>
+  <div class="discharge-badge">
+    <div class="d-num" id="discharge-dday">—</div>
+    <div class="d-label">전역까지</div>
+  </div>
+</div>
+
+<div class="stats-row">
+  <div class="stat-card">
+    <div class="stat-label">총 휴가일수</div>
+    <div class="stat-value">50</div>
+    <div class="stat-sub">휴가 + 외박 + 외출</div>
+  </div>
+  <div class="stat-card accent-vacation">
+    <div class="stat-label">휴가</div>
+    <div class="stat-value">46</div>
+    <div class="stat-sub">일 (6회)</div>
+  </div>
+  <div class="stat-card accent-overnight">
+    <div class="stat-label">외박</div>
+    <div class="stat-value">3</div>
+    <div class="stat-sub">박 (3회)</div>
+  </div>
+  <div class="stat-card accent-outing">
+    <div class="stat-label">외출</div>
+    <div class="stat-value" id="outing-stat">4</div>
+    <div class="stat-sub">회</div>
+  </div>
+</div>
+
+<div class="main-grid">
+  <!-- TIMELINE -->
+  <div class="timeline-panel">
+    <div class="panel-header">
+      <span class="panel-title">전체 일정</span>
+      <span style="font-size:11px;color:var(--text-dim)">클릭해서 계획 작성</span>
+    </div>
+    <div class="timeline" id="timeline"></div>
+  </div>
+
+  <!-- SIDE -->
+  <div class="side-col">
+    <!-- NEXT -->
+    <div class="next-event-card">
+      <div class="next-event-inner">
+        <div class="next-event-type">⚡ 다음 일정</div>
+        <div class="next-event-name" id="next-name">—</div>
+        <div class="next-event-date" id="next-date">—</div>
+      </div>
+      <div class="next-event-progress">
+        <div class="progress-label">
+          <span id="prog-from">—</span>
+          <span id="prog-pct">—</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
+      </div>
+    </div>
+
+    <!-- BUDGET -->
+    <div class="budget-card">
+      <div class="panel-header">
+        <span class="panel-title">예산 트래커</span>
+      </div>
+      <div class="budget-body">
+        <div class="budget-total-row">
+          <div>
+            <div style="font-size:10px;color:var(--text-dim);margin-bottom:2px">지출 합계</div>
+            <div class="budget-spent" id="budget-spent">0원</div>
+          </div>
+          <div class="budget-limit" id="budget-limit-display">/ 0원</div>
+        </div>
+        <div class="budget-bar"><div class="budget-fill" id="budget-fill" style="width:0%"></div></div>
+        <div class="budget-items" id="budget-items"></div>
+        <button class="add-budget-btn" onclick="addBudgetItem()">＋ 항목 추가</button>
+      </div>
+      <div class="budget-limit-row">
+        <span class="budget-limit-label">예산 한도</span>
+        <input class="budget-limit-input" id="budget-limit-input" type="text" placeholder="예: 300000" oninput="updateBudget()">
+        <span style="font-size:11px;color:var(--text-dim)">원</span>
+      </div>
+    </div>
+
+    <!-- CHECKLIST -->
+    <div class="checklist-card">
+      <div class="panel-header">
+        <span class="panel-title">준비물 체크리스트</span>
+      </div>
+      <div class="checklist-body">
+        <div class="checklist-items" id="checklist-items"></div>
+        <div class="add-check-row">
+          <input class="add-check-input" id="check-input" placeholder="준비물 추가..." onkeydown="if(event.key==='Enter')addCheck()">
+          <button class="add-check-btn" onclick="addCheck()">+</button>
+        </div>
+      </div>
+      <div class="checklist-progress-row">
+        <div class="checklist-bar"><div class="checklist-fill" id="check-fill" style="width:0%"></div></div>
+        <span class="checklist-pct" id="check-pct">0%</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:var(--vacation)"></div> 휴가</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--overnight)"></div> 외박</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--outing)"></div> 외출</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--discharge)"></div> 전역</div>
+</div>
+
+<div style="text-align:center;margin-top:14px;">
+  <button onclick="saveDB();setTimeout(()=>{if(navigator.clipboard){navigator.clipboard.writeText(location.href).then(()=>{document.getElementById('copy-hint').textContent='✅ 복사 완료! 이 URL을 북마크에 추가하세요';}).catch(()=>{document.getElementById('copy-hint').textContent='주소창 URL을 직접 복사해서 북마크 저장하세요!';});}else{document.getElementById('copy-hint').textContent='주소창 URL을 직접 복사해서 북마크 저장하세요!';}},150)" style="background:var(--surface);border:1.5px solid var(--border);border-radius:10px;color:var(--accent);font-size:12px;font-weight:600;padding:8px 20px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;">🔗 저장 후 URL 복사</button>
+  <p id="copy-hint" style="font-size:11px;color:var(--text-dim);margin-top:6px;">저장 후 이 URL을 북마크에 추가하면 사지방 어디서든 복원돼요</p>
+</div>
+<div id="save-toast" style="position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(8px);background:#7c5cfc;color:#fff;font-size:12px;font-weight:600;padding:10px 20px;border-radius:20px;opacity:0;transition:all 0.3s;pointer-events:none;font-family:'Noto Sans KR',sans-serif;z-index:999;">✅ 저장 완료! URL 북마크 잊지 마세요</div>
+
+<script>
+const EVENTS = [
+  { id:'e1', type:'overnight', label:'외박', start:'2026-04-04', end:'2026-04-05' },
+  { id:'e2', type:'vacation', label:'휴가', start:'2026-04-26', end:'2026-05-04' },
+  { id:'e3', type:'outing', label:'외출', start:'2026-05-16', end:'2026-05-16' },
+  { id:'e4', type:'vacation', label:'휴가', start:'2026-05-23', end:'2026-05-29' },
+  { id:'e5', type:'outing', label:'외출', start:'2026-06-06', end:'2026-06-06' },
+  { id:'e6', type:'vacation', label:'휴가', start:'2026-06-20', end:'2026-06-26' },
+  { id:'e7', type:'overnight', label:'외박', start:'2026-07-11', end:'2026-07-12' },
+  { id:'e8', type:'vacation', label:'휴가', start:'2026-07-27', end:'2026-08-07' },
+  { id:'e9', type:'outing', label:'외출', start:'2026-08-15', end:'2026-08-15' },
+  { id:'e10', type:'vacation', label:'휴가', start:'2026-08-18', end:'2026-08-28' },
+  { id:'e11', type:'discharge', label:'🎉 전역', start:'2026-09-03', end:'2026-09-03' },
+];
+
+const MONTHS_KO = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+const DISCHARGE_DATE = new Date('2026-09-03');
+
+function parseDate(s) { const [y,m,d]=s.split('-'); return new Date(+y,+m-1,+d); }
+function diffDays(a,b) { return Math.round((b-a)/(1000*60*60*24)); }
+function formatKo(d) { return `${d.getFullYear()}년 ${MONTHS_KO[d.getMonth()]} ${d.getDate()}일`; }
+function formatShort(d) { return `${MONTHS_KO[d.getMonth()]} ${d.getDate()}일`; }
+
+const today = new Date(); today.setHours(0,0,0,0);
+
+// STORAGE: URL hash with LZ compression
+const DB = {};
+
+function compress(obj) {
+  try { return encodeURIComponent(JSON.stringify(obj)); } catch(e) { return ''; }
+}
+function decompress(str) {
+  try { return JSON.parse(decodeURIComponent(str)); } catch(e) { return {}; }
+}
+
+function loadDB() {
+  try {
+    const h = location.hash.slice(1);
+    if (h) {
+      const parsed = decompress(h);
+      Object.assign(DB, parsed);
+    }
+  } catch(e) {}
+}
+
+let _saveTimer = null;
+function _persistDB() {
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(() => {
+    try {
+      history.replaceState(null, '', '#' + compress(DB));
+    } catch(e) {}
+  }, 400);
+}
+
+function saveDB() {
+  try {
+    history.replaceState(null, '', '#' + compress(DB));
+    showSaveToast();
+  } catch(e) {}
+}
+
+function showSaveToast() {
+  const t = document.getElementById('save-toast'); if(!t) return;
+  t.style.opacity='1'; t.style.transform='translateY(0)';
+  setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateY(8px)'; }, 2200);
+}
+
+loadDB();
+
+function lsGet(k, fallback='') { return DB[k] !== undefined ? DB[k] : fallback; }
+function lsSet(k, v) { DB[k] = v; _persistDB(); }
+function lsGetJSON(k, fallback) {
+  try {
+    const v = DB[k];
+    if (v === undefined) return fallback;
+    return typeof v === 'string' ? JSON.parse(v) : v;
+  } catch(e) { return fallback; }
+}
+function lsSetJSON(k, v) { DB[k] = v; _persistDB(); }
+
+// Header
+document.getElementById('today-str').textContent = `오늘: ${formatKo(today)}`;
+const dd = diffDays(today, DISCHARGE_DATE);
+document.getElementById('discharge-dday').textContent = dd > 0 ? `D-${dd}` : (dd===0?'D-DAY':'전역완료');
+
+// ─── TEMPLATE BUILDER ───────────────────────────────────────
+function buildTravelTemplate(id) {
+  const data = lsGetJSON('tmpl_travel_'+id, {dest:'',transport:'',stay:'',budget:'',note:''});
+  return `
+  <div class="tmpl-grid">
+    <div class="tmpl-field"><label>📍 목적지</label>
+      <input class="tmpl-input" placeholder="어디 가?" value="${data.dest||''}" oninput="saveTmpl('travel','${id}','dest',this.value)">
+    </div>
+    <div class="tmpl-field"><label>🚌 교통편</label>
+      <input class="tmpl-input" placeholder="버스 / KTX / 자가용..." value="${data.transport||''}" oninput="saveTmpl('travel','${id}','transport',this.value)">
+    </div>
+    <div class="tmpl-field"><label>🏠 숙소</label>
+      <input class="tmpl-input" placeholder="숙소 이름 / 주소" value="${data.stay||''}" oninput="saveTmpl('travel','${id}','stay',this.value)">
+    </div>
+    <div class="tmpl-field"><label>💰 예상 경비</label>
+      <input class="tmpl-input" placeholder="예: 150,000원" value="${data.budget||''}" oninput="saveTmpl('travel','${id}','budget',this.value)">
+    </div>
+  </div>
+  <div class="tmpl-field" style="margin-bottom:0">
+    <label>📝 메모</label>
+    <textarea class="tmpl-input" placeholder="추가 메모..." oninput="saveTmpl('travel','${id}','note',this.value)">${data.note||''}</textarea>
+  </div>`;
+}
+
+function buildRestTemplate(id) {
+  const items = lsGetJSON('tmpl_rest_'+id, [{text:'넷플릭스 정주행',done:false},{text:'푹 자기',done:false}]);
+  const rows = items.map((it,i)=>`
+    <div class="bucket-item" id="bucket-${id}-${i}">
+      <input type="checkbox" ${it.done?'checked':''} onchange="toggleBucket('${id}',${i},this.checked)">
+      <input class="bucket-text" value="${it.text}" placeholder="하고 싶은 것..." oninput="editBucket('${id}',${i},this.value)">
+      <button class="bucket-del" onclick="deleteBucket('${id}',${i})">×</button>
+    </div>`).join('');
+  return `
+  <div class="bucket-list" id="bucketlist-${id}">${rows}</div>
+  <div class="add-bucket-row">
+    <input class="add-bucket-input" id="bucket-inp-${id}" placeholder="하고 싶은 것 추가..." onkeydown="if(event.key==='Enter')addBucket('${id}')">
+    <button class="add-bucket-btn" onclick="addBucket('${id}')">+</button>
+  </div>`;
+}
+
+function getDefaultTodos(id) {
+  const ev = EVENTS.find(e=>e.id===id);
+  if(!ev) return [{text:'',done:false}];
+  const s = parseDate(ev.start), e = parseDate(ev.end);
+  const days = diffDays(s,e);
+  const result = [];
+  for(let i=0;i<=days;i++){
+    const d = new Date(s); d.setDate(d.getDate()+i);
+    result.push({text: formatShort(d), done:false});
+  }
+  return result;
+}
+
+function buildTodoTemplate(id) {
+  // date labels always from event, only store memo text + done state compactly
+  const defaults = getDefaultTodos(id);
+  const stored = lsGetJSON('tmpl_todo_'+id, null);
+  // stored format: {m: [memo,...], d: [done,...]} OR old format array
+  let memos = [], dones = [];
+  if (stored && Array.isArray(stored)) {
+    // old format - migrate
+    memos = stored.map(x => x.memo || '');
+    dones = stored.map(x => x.done || false);
+    lsSetJSON('tmpl_todo_'+id, {m: memos, d: dones});
+  } else if (stored && stored.m) {
+    memos = stored.m;
+    dones = stored.d || [];
+  } else {
+    memos = defaults.map(() => '');
+    dones = defaults.map(() => false);
+    lsSetJSON('tmpl_todo_'+id, {m: memos, d: dones});
+  }
+  const items = defaults.map((def, i) => ({label: def.text, memo: memos[i]||'', done: dones[i]||false}));
+  const rows = items.map((it,i)=>`
+    <div class="todo-item" id="todo-${id}-${i}">
+      <input type="checkbox" ${it.done?'checked':''} onchange="toggleTodo('${id}',${i},this.checked)">
+      <span style="font-size:11px;color:var(--text-dim);min-width:52px;flex-shrink:0;">${it.label}</span>
+      <input class="todo-text" value="${(it.memo||'').replace(/"/g,'&quot;')}" placeholder="계획 입력..." oninput="editTodo('${id}',${i},this.value)">
+    </div>`).join('');
+  return `
+  <div class="todo-list" id="todolist-${id}">${rows}</div>
+  <div class="add-todo-row">
+    <input class="add-todo-input" id="todo-inp-${id}" placeholder="항목 추가..." onkeydown="if(event.key==='Enter')addTodo('${id}')">
+    <button class="add-todo-btn" onclick="addTodo('${id}')">+</button>
+  </div>`;
+}
+
+// save travel fields
+function saveTmpl(type, id, field, val) {
+  const key = `tmpl_${type}_${id}`;
+  const data = lsGetJSON(key, {});
+  data[field] = val;
+  lsSetJSON(key, data);
+  scheduleSave();
+}
+
+// bucket list ops
+function addBucket(id) {
+  const inp = document.getElementById('bucket-inp-'+id);
+  const v = inp.value.trim(); if(!v) return;
+  const items = lsGetJSON('tmpl_rest_'+id, []);
+  items.push({text:v, done:false});
+  lsSetJSON('tmpl_rest_'+id, items);
+  inp.value = '';
+  refreshTemplate(id, 'rest');
+}
+function toggleBucket(id, i, v) {
+  const items = lsGetJSON('tmpl_rest_'+id, []);
+  if(items[i]) { items[i].done = v; lsSetJSON('tmpl_rest_'+id, items); }
+}
+function editBucket(id, i, v) {
+  const items = lsGetJSON('tmpl_rest_'+id, []);
+  if(items[i]) { items[i].text = v; lsSetJSON('tmpl_rest_'+id, items); scheduleSave(); }
+}
+function deleteBucket(id, i) {
+  const items = lsGetJSON('tmpl_rest_'+id, []);
+  items.splice(i,1); lsSetJSON('tmpl_rest_'+id, items);
+  refreshTemplate(id, 'rest');
+}
+
+// todo ops
+function addTodo(id) {
+  const inp = document.getElementById('todo-inp-'+id);
+  const v = inp.value.trim(); if(!v) return;
+  const stored = lsGetJSON('tmpl_todo_'+id, {m:[], d:[]});
+  if(!stored.m) stored.m = []; if(!stored.d) stored.d = [];
+  stored.m.push(v); stored.d.push(false);
+  // Also add to defaults so label shows the custom text
+  const ev = EVENTS.find(e=>e.id===id);
+  if(ev) { if(!ev._extra) ev._extra=[]; ev._extra.push(v); }
+  lsSetJSON('tmpl_todo_'+id, stored);
+  inp.value = '';
+  refreshTemplate(id, 'todo');
+}
+function toggleTodo(id, i, v) {
+  const stored = lsGetJSON('tmpl_todo_'+id, {m:[], d:[]});
+  if (!stored.d) stored.d = [];
+  stored.d[i] = v;
+  lsSetJSON('tmpl_todo_'+id, stored);
+}
+function editTodo(id, i, v) {
+  const stored = lsGetJSON('tmpl_todo_'+id, {m:[], d:[]});
+  if (!stored.m) stored.m = [];
+  stored.m[i] = v;
+  lsSetJSON('tmpl_todo_'+id, stored);
+}
+function deleteTodo(id, i) {
+  const stored = lsGetJSON('tmpl_todo_'+id, {m:[], d:[]});
+  if(stored.m) stored.m.splice(i,1);
+  if(stored.d) stored.d.splice(i,1);
+  lsSetJSON('tmpl_todo_'+id, stored);
+  refreshTemplate(id, 'todo');
+}
+
+function refreshTemplate(id, type) {
+  const el = document.getElementById(`tmpl-body-${type}-${id}`);
+  if(el) {
+    if(type==='rest') el.innerHTML = buildRestTemplate(id);
+    else if(type==='todo') el.innerHTML = buildTodoTemplate(id);
+  }
+}
+
+function selectType(id, type) {
+  // update buttons
+  ['travel','rest','todo'].forEach(t => {
+    const btn = document.getElementById(`tbtn-${t}-${id}`);
+    if(btn) btn.className = `type-btn${type===t?' selected-'+t:''}`;
+  });
+  // show/hide templates
+  ['travel','rest','todo'].forEach(t => {
+    const panel = document.getElementById(`tmpl-${t}-${id}`);
+    if(panel) panel.className = `tmpl${type===t?' show':''}`;
+  });
+  lsSet('tmpl_type_'+id, type);
+}
+
+// ─── BUILD TIMELINE ─────────────────────────────────────────
+const tl = document.getElementById('timeline');
+let activeId = null;
+
+EVENTS.forEach(ev => {
+  const s = parseDate(ev.start);
+  const e = parseDate(ev.end);
+  const days = diffDays(s,e);
+  const dToStart = diffDays(today, s);
+
+  let ddayStr = '';
+  if (today < s) ddayStr = `D-${diffDays(today,s)}`;
+  else if (today >= s && today <= e) ddayStr = '진행중';
+  else ddayStr = '완료';
+
+  const isSoon = dToStart > 0 && dToStart <= 7;
+  const isToday = today >= s && today <= e;
+  const isDone = today > e;
+  const dateLabel = ev.start === ev.end ? formatShort(s) : `${formatShort(s)} ~ ${formatShort(e)}`;
+
+  const savedType = lsGet('tmpl_type_'+ev.id, '');
+
+  // build type selector only for non-discharge
+  const typeSelector = ev.type !== 'discharge' ? `
+    <div class="type-selector">
+      <button class="type-btn${savedType==='travel'?' selected-travel':''}" id="tbtn-travel-${ev.id}" onclick="selectType('${ev.id}','travel');event.stopPropagation()">✈️ 여행</button>
+      <button class="type-btn${savedType==='rest'?' selected-rest':''}" id="tbtn-rest-${ev.id}" onclick="selectType('${ev.id}','rest');event.stopPropagation()">😴 휴식</button>
+      <button class="type-btn${savedType==='todo'?' selected-todo':''}" id="tbtn-todo-${ev.id}" onclick="selectType('${ev.id}','todo');event.stopPropagation()">📋 할 일</button>
+    </div>
+    <div class="tmpl${savedType==='travel'?' show':''}" id="tmpl-travel-${ev.id}">
+      <div id="tmpl-body-travel-${ev.id}">${buildTravelTemplate(ev.id)}</div>
+    </div>
+    <div class="tmpl${savedType==='rest'?' show':''}" id="tmpl-rest-${ev.id}">
+      <div id="tmpl-body-rest-${ev.id}">${buildRestTemplate(ev.id)}</div>
+    </div>
+    <div class="tmpl${savedType==='todo'?' show':''}" id="tmpl-todo-${ev.id}">
+      <div id="tmpl-body-todo-${ev.id}">${buildTodoTemplate(ev.id)}</div>
+    </div>` : `<textarea class="memo-input" placeholder="전역 후 계획을 적어봐요 🎉" oninput="lsSet('memo_${ev.id}',this.value)" onclick="event.stopPropagation()">${lsGet('memo_'+ev.id)}</textarea>`;
+
+  const item = document.createElement('div');
+  item.className = 'tl-item';
+  item.id = 'tl-'+ev.id;
+  if (isDone) item.style.opacity = '0.45';
+
+  item.innerHTML = `
+    <div class="tl-date">
+      <span class="tl-month">${MONTHS_KO[s.getMonth()]}</span>
+      <span class="tl-day">${String(s.getDate()).padStart(2,'0')}</span>
+    </div>
+    <div class="tl-content">
+      <div class="tl-top">
+        <span class="type-badge badge-${ev.type}">${ev.label}</span>
+        <span class="tl-title">${dateLabel}${days>0?' ('+days+'박 '+(days+1)+'일)':''}</span>
+        <span class="tl-dday ${isSoon?'soon':''} ${isToday?'today':''}">${ddayStr}</span>
+      </div>
+      <div class="tl-panel" id="panel-${ev.id}" onclick="event.stopPropagation()">
+        ${typeSelector}
+      </div>
+    </div>
+  `;
+
+  item.addEventListener('click', () => {
+    const panel = document.getElementById('panel-'+ev.id);
+    if (activeId && activeId !== ev.id) {
+      document.getElementById('tl-'+activeId)?.classList.remove('active');
+    }
+    item.classList.toggle('active');
+    activeId = item.classList.contains('active') ? ev.id : null;
+  });
+
+  tl.appendChild(item);
+});
+
+// ─── NEXT EVENT ─────────────────────────────────────────────
+const upcoming = EVENTS.filter(ev => parseDate(ev.start) >= today);
+if (upcoming.length) {
+  const nxt = upcoming[0];
+  const s = parseDate(nxt.start);
+  const e = parseDate(nxt.end);
+  document.getElementById('next-name').textContent = nxt.label + ' · ' + (nxt.start===nxt.end?formatShort(s):`${formatShort(s)} ~ ${formatShort(e)}`);
+  document.getElementById('next-date').textContent = `D-${diffDays(today,s)} · ${formatKo(s)}`;
+  const prev = EVENTS[EVENTS.indexOf(nxt)-1];
+  if (prev) {
+    const prevEnd = parseDate(prev.end);
+    const total = diffDays(prevEnd, s);
+    const elapsed = diffDays(prevEnd, today);
+    const pct = total > 0 ? Math.min(100, Math.round(elapsed/total*100)) : 0;
+    document.getElementById('prog-from').textContent = formatShort(prevEnd) + ' 이후';
+    document.getElementById('prog-pct').textContent = pct + '%';
+    document.getElementById('prog-fill').style.width = pct + '%';
+  }
+}
+
+// ─── BUDGET ─────────────────────────────────────────────────
+let budgetItems = lsGetJSON('budget_items', []);
+let budgetLimit = parseInt(lsGet('budget_limit','0'))||0;
+if (budgetLimit) document.getElementById('budget-limit-input').value = budgetLimit;
+
+function saveBudget() { lsSetJSON('budget_items', budgetItems); }
+function saveBudgetLimit(v) { lsSet('budget_limit', v); }
+
+function renderBudget() {
+  const container = document.getElementById('budget-items');
+  container.innerHTML = '';
+  let total = 0;
+  budgetItems.forEach((item, i) => {
+    total += item.amount || 0;
+    const div = document.createElement('div');
+    div.className = 'budget-item';
+    div.innerHTML = `
+      <input class="budget-item-name" value="${item.name}" placeholder="항목명" oninput="budgetItems[${i}].name=this.value;saveBudget();updateBudget()">
+      <input class="budget-item-amount" value="${item.amount||''}" placeholder="금액" type="number" oninput="budgetItems[${i}].amount=parseInt(this.value)||0;saveBudget();updateBudget()">
+      <button class="budget-item-delete" onclick="budgetItems.splice(${i},1);saveBudget();renderBudget();updateBudget()">×</button>
+    `;
+    container.appendChild(div);
+  });
+  document.getElementById('budget-spent').textContent = total.toLocaleString()+'원';
+  const lim = parseInt(document.getElementById('budget-limit-input').value)||0;
+  document.getElementById('budget-limit-display').textContent = '/ '+(lim?lim.toLocaleString():'?')+'원';
+  const pct = lim > 0 ? Math.min(100, Math.round(total/lim*100)) : 0;
+  document.getElementById('budget-fill').style.width = pct+'%';
+  document.getElementById('budget-fill').style.background = pct>85?'linear-gradient(90deg,var(--accent2),#c84060)':'linear-gradient(90deg,var(--accent3),var(--accent))';
+}
+function addBudgetItem() { budgetItems.push({name:'',amount:0}); saveBudget(); renderBudget(); }
+function updateBudget() { saveBudgetLimit(parseInt(document.getElementById('budget-limit-input').value)||0); renderBudget(); }
+renderBudget();
+
+// ─── CHECKLIST ───────────────────────────────────────────────
+let checkItems = lsGetJSON('check_items', []);
+if (!checkItems.length) checkItems = [
+  {label:'신분증', checked:false},{label:'여분 옷', checked:false},
+  {label:'세면도구', checked:false},{label:'충전기', checked:false},{label:'현금', checked:false},
+];
+function saveChecks() { lsSetJSON('check_items', checkItems); }
+function renderChecks() {
+  const container = document.getElementById('checklist-items');
+  container.innerHTML = '';
+  checkItems.forEach((item, i) => {
+    const div = document.createElement('div');
+    div.className = 'check-item';
+    const uid = 'chk-'+i;
+    div.innerHTML = `
+      <input type="checkbox" id="${uid}" ${item.checked?'checked':''} onchange="checkItems[${i}].checked=this.checked;saveChecks();updateCheckProgress()">
+      <label for="${uid}">${item.label}</label>
+      <button class="del-check" onclick="checkItems.splice(${i},1);saveChecks();renderChecks()">×</button>
+    `;
+    container.appendChild(div);
+  });
+  updateCheckProgress();
+}
+function updateCheckProgress() {
+  const total = checkItems.length;
+  const done = checkItems.filter(c=>c.checked).length;
+  const pct = total > 0 ? Math.round(done/total*100) : 0;
+  document.getElementById('check-fill').style.width = pct+'%';
+  document.getElementById('check-pct').textContent = pct+'%';
+}
+function addCheck() {
+  const inp = document.getElementById('check-input');
+  const v = inp.value.trim(); if (!v) return;
+  checkItems.push({label:v, checked:false});
+  saveChecks(); renderChecks(); inp.value = '';
+}
+renderChecks();
+</script>
+</body>
+</html>
